@@ -45,13 +45,14 @@ def app_mention(event_data):
 @slack_events_adapter.on("reaction_added")
 def reaction_added(event_data):
     event = event_data["event"]
-    channel = requests.get('https://slack.com/api/groups.info', params={'token': slack_bot_token, 'channel': event["item"]["channel"]}).json()['group']['name']
-    user = requests.get('https://slack.com/api/users.info', params={'token': slack_bot_token, 'user': event["user"]}).json()['user']['real_name']
-    key = event_data["event"]["item"]["ts"]
-    if not checkKey(reacts, key):
-        reacts[key] = []
-        toMake.append(key)
-    reacts[key].append([channel, user])
+    channel = requests.get('https://slack.com/api/channels.info', params={'token': slack_bot_token, 'channel': event["item"]["channel"]}).json()['channel']['name']
+    if channel == "announcements":
+        user = requests.get('https://slack.com/api/users.info', params={'token': slack_bot_token, 'user': event["user"]}).json()['user']['real_name']
+        key = event_data["event"]["item"]["ts"]
+        if not checkKey(reacts, key):
+            reacts[key] = []
+            toMake.append(key)
+        reacts[key].append([channel, user])
 
 def checkKey(dict, key): 
     if key in dict.keys(): 
