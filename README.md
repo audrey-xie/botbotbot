@@ -12,7 +12,7 @@ pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-
 
 python quickstart.py
 
-(make slack app, enable event subscriptions and subscribe to bot events, make a slash command /dump)
+(make slack app, enable event subscriptions and subscribe to bot events, make slash commands /dump and /helpme)
 
 ngrok http 3000
 

@@ -1,3 +1,4 @@
+# coding: utf-8
 from slackeventsapi import SlackEventAdapter
 from slackclient import SlackClient
 import os
@@ -36,17 +37,14 @@ def app_mention(event_data):
             return_message = "follow this link --> https://www.youtube.com/watch?v=dQw4w9WgXcQ"
         elif "joke" in text:
             return_message = str(requests.get("https://icanhazdadjoke.com/", headers={"Accept": "application/json"}).json()["joke"])
-        elif "help" in text:
-            return_message = "Commands for botbotbot:\n    - hi/hello\n    - joke\n    - rr"
-        
         if return_message != None:
             slack_client.api_call("chat.postMessage", channel=channel, text=return_message)
 
 @slack_events_adapter.on("reaction_added")
 def reaction_added(event_data):
     event = event_data["event"]
-    channel = requests.get('https://slack.com/api/channels.info', params={'token': slack_bot_token, 'channel': event["item"]["channel"]}).json()['channel']['name']
-    if channel == "announcements":
+    channel = requests.get('https://slack.com/api/groups.info', params={'token': slack_bot_token, 'channel': event["item"]["channel"]}).json()['group']['name']
+    if channel == "testing" and event["item_user"] == "UNPN0Q8HZ":
         user = requests.get('https://slack.com/api/users.info', params={'token': slack_bot_token, 'user': event["user"]}).json()['user']['real_name']
         key = event_data["event"]["item"]["ts"]
         if not checkKey(reacts, key):
@@ -82,6 +80,29 @@ def dump():
     thr = Thread(target=addToSheet, args=[response_url])
     thr.start()
     return {"text": "Working on it..."}
+
+@app.route('/helpme', methods=['POST'])
+def helpme():
+    return {
+        "response_type": "in_channel",
+        "text": "@ commands for botbotbot:\n    - hi/hello\n    - joke\n    - rr\n\n/ commands for botbotbot:\n    - /helpme\n    - /dump (should only be used by admin)\n    - /tf\n    - /uf"
+        }
+
+@app.route('/tf', methods=['POST'])
+def tf():
+    payload = {
+        "response_type": "in_channel",
+        "text": "(╯°□°）╯︵ ┻━┻"
+        }
+    return jsonify(payload)
+
+@app.route('/uf', methods=['POST'])
+def uf():
+    payload = {
+        "response_type": "in_channel",
+        "text": "┬─┬ ノ( ゜-゜ノ)"
+        }
+    return jsonify(payload)
 
 if __name__ == "__main__":
   app.run(port=3000)
