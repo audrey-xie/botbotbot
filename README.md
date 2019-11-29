@@ -3,7 +3,7 @@ it's a bot?
 
 ## to use
 
-'''
+```
 (make a new cloud platform project, enable sheets API, and download oauth credentials)
 
 pip install -r requirements.txt
@@ -17,4 +17,4 @@ python quickstart.py
 ngrok http 3000
 
 python main.py
-'''
+```
