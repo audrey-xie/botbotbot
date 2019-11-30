@@ -5,6 +5,7 @@ import os
 import requests
 from flask import Flask, request, jsonify, json
 from threading import Thread
+from random import seed, randint
 
 import sheet
 
@@ -16,13 +17,18 @@ slack_events_adapter = SlackEventAdapter(slack_signing_secret, "/slack/events", 
 slack_bot_token = os.environ["SLACK_BOT_TOKEN"]
 slack_client = SlackClient(slack_bot_token)
 
-SPREADSHEET_ID = os.environ["SPREADSHEET_ID"]
-range_ = '!A:C'
+SPREADSHEET_ID_REACT = os.environ["SPREADSHEET_ID"]
+range_react = '!A:C'
+
+SPREADSHEET_ID_EXCUSE = os.environ["SPREADSHEET_ID_EXCUSE"]
+range_excuse = 'Sheet1!A:A'
 
 reacts = {}
 toMake = []
 
 commands = ["hi", "hello", "rr", "joke", "help"]
+
+seed(1)
 
 @slack_events_adapter.on("app_mention")
 def app_mention(event_data):
@@ -35,8 +41,6 @@ def app_mention(event_data):
             return_message = "Hello <@%s>! :tada:" % message["user"]
         elif "rr" in text:
             return_message = "follow this link --> https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-        elif "joke" in text:
-            return_message = str(requests.get("https://icanhazdadjoke.com/", headers={"Accept": "application/json"}).json()["joke"])
         if return_message != None:
             slack_client.api_call("chat.postMessage", channel=channel, text=return_message)
 
@@ -60,15 +64,15 @@ def checkKey(dict, key):
 
 def addToSheet(response_url):
     for name in toMake:
-        sheet.add_sheets(SPREADSHEET_ID, name)
+        sheet.add_sheets(SPREADSHEET_ID_REACT, name)
     del toMake[:]
     for key in reacts:
-        new_range = key + range_
+        new_range = key + range_react
         resource = {
             "majorDimension": "ROWS",
             "values": reacts[key]
         }
-        sheet.append(SPREADSHEET_ID, new_range, resource)
+        sheet.append(SPREADSHEET_ID_REACT, new_range, resource)
         del reacts[key][:]
     payload = {"text":"The spreadsheet has been updated.\n Here\'s the link! --> https://tinyurl.com/grtbot2020",
                 "username": "bot"}
@@ -81,27 +85,77 @@ def dump():
     thr.start()
     return {"text": "Working on it..."}
 
+def addExcuseToSheet(response_url, text):
+    list_ = [[text]]
+    resource = {
+        "majorDimension": "ROWS",
+        "values": list_
+    }
+    sheet.append(SPREADSHEET_ID_EXCUSE, range_excuse, resource)
+    payload = {"text":"The spreadsheet has been updated.\n Here\'s the link! --> https://tinyurl.com/grtexcuses2020",
+                "username": "bot"}
+    requests.post(response_url, data=json.dumps(payload))
+
+@app.route('/add_excuse', methods=['POST'])
+def add_excuse():
+    response_url = request.form.get("response_url")
+    text = request.form.get("text")
+    thr = Thread(target=addExcuseToSheet, args=[response_url, text])
+    thr.start()
+    return {"text": "Working on it..."}
+
 @app.route('/helpme', methods=['POST'])
 def helpme():
     return {
         "response_type": "in_channel",
-        "text": "@ commands for botbotbot:\n    - hi/hello\n    - joke\n    - rr\n\n/ commands for botbotbot:\n    - /helpme\n    - /dump (should only be used by admin)\n    - /tf\n    - /uf"
+        "text": "@ commands for botbotbot:\n    - hi/hello\n    - rr\n\n/ commands for botbotbot:\n    - /helpme\n    - /dump (should only be used by admin)\n    - /tf [text]\n    - /uf [text]\n    - /joke\n    - /add_excuse [text]\n    - /make_excuse"
         }
 
 @app.route('/tf', methods=['POST'])
 def tf():
+    to_send = request.form.get("text") + " (╯°□°）╯︵ ┻━┻".decode('utf-8')
     payload = {
         "response_type": "in_channel",
-        "text": "(╯°□°）╯︵ ┻━┻"
+        "text": to_send
         }
     return jsonify(payload)
 
 @app.route('/uf', methods=['POST'])
 def uf():
+    to_send = request.form.get("text") + " ┬─┬ ノ( ゜-゜ノ)".decode('utf-8')
     payload = {
         "response_type": "in_channel",
-        "text": "┬─┬ ノ( ゜-゜ノ)"
+        "text": to_send
         }
+    return jsonify(payload)
+
+@app.route('/joke', methods=['POST'])
+def joke():
+    joke = str(requests.get("https://icanhazdadjoke.com/", headers={"Accept": "application/json"}).json()["joke"])
+    payload = {
+        "response_type": "in_channel",
+        "text": joke
+    }
+    return jsonify(payload)
+
+def getExcuseFromSheet(response_url):
+    val = sheet.get_value(SPREADSHEET_ID_EXCUSE, 'Sheet1!A1:A')
+    index = randint(0, len(val) - 1)
+    text = val[index][0]
+    payload = {
+        "response_type": "in_channel",
+        "text":text
+        }
+    requests.post(response_url, data=json.dumps(payload))
+
+@app.route('/make_excuse', methods=['POST'])
+def excuses():
+    response_url = request.form.get("response_url")
+    thr = Thread(target=getExcuseFromSheet, args=[response_url])
+    thr.start()
+    payload = {
+        "text": "Generating excuse..."
+    }
     return jsonify(payload)
 
 if __name__ == "__main__":
