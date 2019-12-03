@@ -26,7 +26,12 @@ range_excuse = 'Sheet1!A:A'
 reacts = {}
 toMake = []
 
-commands = ["hi", "hello", "rr", "joke", "help"]
+ricebowl = [
+    "Research shows that Ricebowl is the best club at Gunn High School.",
+    "Ricebowl of course!",
+    "Ricebowl is objectively the best club at Gunn.",
+    "Sources tell me that it's Ricebowl."
+]
 
 seed(1)
 
@@ -41,6 +46,8 @@ def app_mention(event_data):
             return_message = "Hello <@%s>! :tada:" % message["user"]
         elif "rr" in text:
             return_message = "follow this link --> https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        elif "best club" in text:
+            return_message = ricebowl[randint(0, len(ricebowl) - 1)]
         if return_message != None:
             slack_client.api_call("chat.postMessage", channel=channel, text=return_message)
 
