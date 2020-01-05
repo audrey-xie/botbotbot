@@ -9,6 +9,8 @@ from random import seed, randint
 
 import sheet
 
+PORT = 4390
+
 app = Flask(__name__)
 
 slack_signing_secret = os.environ["SLACK_SIGNING_SECRET"]
@@ -22,8 +24,6 @@ range_react = '!A:C'
 
 SPREADSHEET_ID_EXCUSE = os.environ["SPREADSHEET_ID_EXCUSE"]
 range_excuse = 'Sheet1!A:A'
-
-port = int(os.environ["PORT"])
 
 reacts = {}
 toMake = []
@@ -188,4 +188,5 @@ def leaderboard():
         "text": to_send
     }
 
-app.run(port=port, host="0.0.0.0")
+if __name__ == "__main__":
+  app.run(debug=True, port=PORT)
