@@ -9,8 +9,6 @@ from random import seed, randint
 
 import sheet
 
-PORT = 4390
-
 app = Flask(__name__)
 
 slack_signing_secret = os.environ["SLACK_SIGNING_SECRET"]
@@ -189,4 +187,4 @@ def leaderboard():
     }
 
 if __name__ == "__main__":
-  app.run(debug=True, port=PORT)
+  app.run(port=3000)
