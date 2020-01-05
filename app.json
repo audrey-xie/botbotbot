@@ -1,0 +1,15 @@
+{
+    "name": "botbotbot",
+    "description": "The server side for botbotbot.",
+    "image": "heroku/python",
+    "repository": "https://github.com/audrey-xie/botbotbot",
+    "keywords": ["python", "flask" ],
+    "addons": [ "heroku-postgresql" ],
+    "environments": {
+      "test": {
+        "scripts": {
+          "test": "server.py test"
+        }
+      }
+    }
+  }

@@ -1,4 +1,2 @@
 *.pyc
-token.pickle
-*.json
 /.vscode

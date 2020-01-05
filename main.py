@@ -23,8 +23,12 @@ range_react = '!A:C'
 SPREADSHEET_ID_EXCUSE = os.environ["SPREADSHEET_ID_EXCUSE"]
 range_excuse = 'Sheet1!A:A'
 
+port = int(os.environ["PORT"])
+
 reacts = {}
 toMake = []
+leaderboard = []
+people_who_have_reacted = {}
 
 ricebowl = [
     "Research shows that Ricebowl is the best club at Gunn High School.",
@@ -34,6 +38,11 @@ ricebowl = [
 ]
 
 seed(1)
+
+members = requests.get('https://slack.com/api/users.list', params={'token': slack_bot_token}).json()
+
+for member in members:
+    people_who_have_reacted[member['real_name']] = 0
 
 @slack_events_adapter.on("app_mention")
 def app_mention(event_data):
@@ -54,14 +63,16 @@ def app_mention(event_data):
 @slack_events_adapter.on("reaction_added")
 def reaction_added(event_data):
     event = event_data["event"]
-    channel = requests.get('https://slack.com/api/groups.info', params={'token': slack_bot_token, 'channel': event["item"]["channel"]}).json()['group']['name']
-    if channel == "testing" and event["item_user"] == "UNPN0Q8HZ":
+    channel = requests.get('https://slack.com/api/channels.info', params={'token': slack_bot_token, 'channel': event["item"]["channel"]}).json()['channel']['name']
+    if channel == "announcements":
         user = requests.get('https://slack.com/api/users.info', params={'token': slack_bot_token, 'user': event["user"]}).json()['user']['real_name']
+        emoji = event["reaction"]
         key = event_data["event"]["item"]["ts"]
+        people_who_have_reacted[user] += 1
         if not checkKey(reacts, key):
             reacts[key] = []
             toMake.append(key)
-        reacts[key].append([channel, user])
+        reacts[key].append([user, emoji])
 
 def checkKey(dict, key): 
     if key in dict.keys(): 
@@ -165,5 +176,16 @@ def excuses():
     }
     return jsonify(payload)
 
-if __name__ == "__main__":
-  app.run(port=3000)
+@app.route('/leaderboard', methods=['POST'])
+def leaderboard():
+    min_val = min(people_who_have_reacted.itervalues())
+    leaderboard = [for key, value in people_who_have_reacted.itervalues() == min_val]
+    to_send = requests.form.get("text")
+    for person in leaderboard:
+        to_send += person + "\n"
+    payload = {
+        "response_type": "in_channel"
+        "text": to_send
+    }
+
+app.run(port=port, host="0.0.0.0")
